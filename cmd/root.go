@@ -17,14 +17,19 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"github.com/spf13/cobra"
+	"os"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
 
 var cfgFile string
+
+type Config struct {
+	GoogleApplicationCredentials string `mapstructure:"google_application_credentials"`
+	CalendarIdList []string `mapstructure:"calendar_id_list"`
+}
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
