@@ -17,6 +17,10 @@ package cmd
 
 import (
 	"fmt"
+	"golang.org/x/net/context"
+	"google.golang.org/api/calendar/v3"
+	"log"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -32,7 +36,31 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("events called")
+		ctx := context.Background()
+		srv, err := calendar.NewService(ctx)
+		if err != nil {
+			log.Fatalf("Unable to retrieve Calendar client: %v", err)
+		}
+
+		tmin := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.Now().Location()).Format(time.RFC3339)
+		tmax := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 23, 59, 59, 59, time.Now().Location()).Format(time.RFC3339)
+		for _, cid := range config.CalendarIdList {
+			events, err := srv.Events.List(cid).ShowDeleted(false).
+				SingleEvents(true).TimeMin(tmin).TimeMax(tmax).MaxResults(10).OrderBy("startTime").Do()
+			if err != nil {
+				log.Fatalf("Unable to retrieve next ten of the user's events: %v", err)
+			}
+
+			for _, e := range events.Items {
+				tm := "**:**-**:**"
+				if e.Start.DateTime != "" && e.End.DateTime != "" {
+					ts, _ := time.Parse(time.RFC3339, e.Start.DateTime)
+					te, _ := time.Parse(time.RFC3339, e.End.DateTime)
+					tm = fmt.Sprintf("%02d:%02d-%02d:%02d", ts.Hour(), ts.Minute(), te.Hour(), te.Minute())
+				}
+				fmt.Printf("- %s %s\n", tm, e.Summary)
+			}
+		}
 	},
 }
 

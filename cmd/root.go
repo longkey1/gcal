@@ -16,8 +16,8 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
 	"github.com/spf13/cobra"
+	"log"
 	"os"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -25,6 +25,8 @@ import (
 )
 
 var cfgFile string
+
+var config Config
 
 type Config struct {
 	GoogleApplicationCredentials string `mapstructure:"google_application_credentials"`
@@ -79,13 +81,22 @@ func initConfig() {
 
 		// Search config in home/.config directory with name "config.toml" (without extension).
 		viper.AddConfigPath(home+"/.config/gcal")
-		viper.SetConfigName("config.toml")
+		viper.SetConfigName("config")
+		viper.SetConfigType("toml")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatalf("Unable to read config file, %v", err)
+	}
+	if err := viper.Unmarshal(&config); err != nil {
+		log.Fatalf("Unable to decode into struct, %v", err)
+	}
+
+	// Set GOOGLE_APPLICATION_CREDENTIALS
+	if err := os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", config.GoogleApplicationCredentials); err != nil {
+		log.Fatalf("Unable to set GOOGLE_APPLICATION_CREDENTIALS, %v", err)
 	}
 }
