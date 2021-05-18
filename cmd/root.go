@@ -33,7 +33,8 @@ type Config struct {
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "gcal",
+	Version: "0.0.1",
+	Use: "gcal",
 	Short: "A brief description of your application",
 	Long: `A longer description that spans multiple lines and likely contains
 examples and usage of using your application. For example:
@@ -59,7 +60,7 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.gcal.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.config/gcal/config.toml)")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -76,9 +77,9 @@ func initConfig() {
 		home, err := homedir.Dir()
 		cobra.CheckErr(err)
 
-		// Search config in home directory with name ".gcal" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".gcal")
+		// Search config in home/.config directory with name "config.toml" (without extension).
+		viper.AddConfigPath(home+"/.config/gcal")
+		viper.SetConfigName("config.toml")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
