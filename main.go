@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "gcal/cmd"
+import "github.com/longkey1/gcal/cmd"
 
 func main() {
 	cmd.Execute()
