@@ -20,6 +20,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/api/calendar/v3"
 	"log"
+	"sort"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -27,7 +28,7 @@ import (
 
 // eventsCmd represents the events command
 var eventsCmd = &cobra.Command{
-	Use:   "events",
+	Use:   "list",
 	Short: "A brief description of your command",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
@@ -44,22 +45,35 @@ to quickly create a Cobra application.`,
 
 		tmin := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.Now().Location()).Format(time.RFC3339)
 		tmax := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 23, 59, 59, 59, time.Now().Location()).Format(time.RFC3339)
+		var es []*calendar.Event
 		for _, cid := range config.CalendarIdList {
 			events, err := srv.Events.List(cid).ShowDeleted(false).
 				SingleEvents(true).TimeMin(tmin).TimeMax(tmax).MaxResults(10).OrderBy("startTime").Do()
 			if err != nil {
 				log.Fatalf("Unable to retrieve next ten of the user's events: %v", err)
 			}
+			es = append(es, events.Items...)
+		}
 
-			for _, e := range events.Items {
-				tm := "**:**-**:**"
-				if e.Start.DateTime != "" && e.End.DateTime != "" {
-					ts, _ := time.Parse(time.RFC3339, e.Start.DateTime)
-					te, _ := time.Parse(time.RFC3339, e.End.DateTime)
-					tm = fmt.Sprintf("%02d:%02d-%02d:%02d", ts.Hour(), ts.Minute(), te.Hour(), te.Minute())
-				}
-				fmt.Printf("- %s %s\n", tm, e.Summary)
+		sort.Slice(es, func(x, y int) bool {
+			if es[x].Start.DateTime != "" && es[y].Start.DateTime != "" {
+				return es[x].Start.DateTime < es[y].Start.DateTime
 			}
+			if es[y].Start.DateTime != "" {
+				return true
+			}
+
+			return false
+		})
+
+		for _, e := range es {
+			tm := "-----------"
+			if e.Start.DateTime != "" && e.End.DateTime != "" {
+				ts, _ := time.Parse(time.RFC3339, e.Start.DateTime)
+				te, _ := time.Parse(time.RFC3339, e.End.DateTime)
+				tm = fmt.Sprintf("%02d:%02d-%02d:%02d", ts.Hour(), ts.Minute(), te.Hour(), te.Minute())
+			}
+			fmt.Printf("- %s %s\n", tm, e.Summary)
 		}
 	},
 }
