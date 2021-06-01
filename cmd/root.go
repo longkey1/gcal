@@ -35,7 +35,7 @@ type Config struct {
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Version: "0.1.0",
+	Version: "0.2.0",
 	Use: "gcal",
 	Short: "A brief description of your application",
 	// Uncomment the following line if your bare application
