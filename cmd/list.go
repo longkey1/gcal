@@ -26,8 +26,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// eventsCmd represents the events command
-var eventsCmd = &cobra.Command{
+// listCmd represents the events command
+var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "A brief description of your command",
 	Long: `A longer description that spans multiple lines and likely contains examples
@@ -79,7 +79,7 @@ to quickly create a Cobra application.`,
 }
 
 func init() {
-	rootCmd.AddCommand(eventsCmd)
+	rootCmd.AddCommand(listCmd)
 
 	// Here you will define your flags and configuration settings.
 
