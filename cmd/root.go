@@ -73,7 +73,7 @@ func initConfig() {
 		home, err := homedir.Dir()
 		cobra.CheckErr(err)
 
-		// Search config in home/.config directory with name "config.toml" (without extension).
+		// Search config in home/.config/gcal directory with name "config.toml" (without extension).
 		viper.AddConfigPath(home+"/.config/gcal")
 		viper.SetConfigName("config")
 		viper.SetConfigType("toml")
