@@ -16,6 +16,7 @@ limitations under the License.
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"golang.org/x/net/context"
 	"google.golang.org/api/calendar/v3"
@@ -62,15 +63,11 @@ var todayCmd = &cobra.Command{
 			return false
 		})
 
-		for _, e := range es {
-			tm := "-----------"
-			if e.Start.DateTime != "" && e.End.DateTime != "" {
-				ts, _ := time.Parse(time.RFC3339, e.Start.DateTime)
-				te, _ := time.Parse(time.RFC3339, e.End.DateTime)
-				tm = fmt.Sprintf("%02d:%02d-%02d:%02d", ts.Hour(), ts.Minute(), te.Hour(), te.Minute())
-			}
-			fmt.Printf("- %s %s\n", tm, e.Summary)
+		b, err := json.Marshal(es)
+		if err != nil {
+			log.Fatalf("Unable to marshal json: %v", err)
 		}
+		fmt.Printf("%s", b)
 	},
 }
 
