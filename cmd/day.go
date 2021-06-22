@@ -27,11 +27,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// todayCmd represents the events command
-var todayCmd = &cobra.Command{
-	Use:   "today",
-	Short: "today's event list",
-	Long: `today's event list, by markdown format',
+var Diff int
+
+// dayCmd represents the events command
+var dayCmd = &cobra.Command{
+	Use:   "day",
+	Short: "day's events",
+	Long: `day's events',
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
@@ -40,8 +42,8 @@ var todayCmd = &cobra.Command{
 			log.Fatalf("Unable to retrieve Calendar client: %v", err)
 		}
 
-		tmin := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.Now().Location()).Format(time.RFC3339)
-		tmax := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 23, 59, 59, 59, time.Now().Location()).Format(time.RFC3339)
+		tmin := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day() + Diff, 0, 0, 0, 0, time.Now().Location()).Format(time.RFC3339)
+		tmax := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day() + Diff, 23, 59, 59, 59, time.Now().Location()).Format(time.RFC3339)
 		var es []*calendar.Event
 		for _, cid := range config.CalendarIdList {
 			events, err := srv.Events.List(cid).ShowDeleted(false).
@@ -72,7 +74,7 @@ var todayCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(todayCmd)
+	rootCmd.AddCommand(dayCmd)
 
 	// Here you will define your flags and configuration settings.
 
@@ -83,4 +85,5 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// eventsCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	dayCmd.Flags().IntVarP(&Diff, "diff", "d", 0, "difference from today")
 }
