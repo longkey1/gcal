@@ -5,6 +5,7 @@ jobs:
     docker:
       - image: circleci/golang:1.16
     working_directory: /go/src/github.com/longkey1/gcal
+    resource_class: small
     steps:
       - checkout
       - run: go get -u github.com/mitchellh/gox
@@ -15,10 +16,12 @@ jobs:
           paths:
             - bin
             - dist
+
   release:
     docker:
       - image: circleci/golang:1.16
     working_directory: /go/src/github.com/longkey1/gcal
+    resource_class: small
     steps:
       - checkout
       - attach_workspace:
