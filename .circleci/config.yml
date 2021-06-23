@@ -1,4 +1,5 @@
-version: 2
+version: 2.1
+
 jobs:
   build:
     docker:
@@ -24,6 +25,7 @@ jobs:
           at: .
       - run: go get -u github.com/tcnksm/ghr
       - run: ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} v$(./bin/gcal --version | cut -d " " -f 3) dist/
+
 workflows:
   version: 2
   build_and_release:
@@ -35,3 +37,6 @@ workflows:
           filters:
             branches:
               only: master
+          context:
+            - github
+
