@@ -44,7 +44,7 @@ var updatesCmd = &cobra.Command{
 		t, _ := time.Parse(time.RFC3339, Since)
 		umin := t.Format(time.RFC3339)
 		var es []*calendar.Event
-		for _, cid := range config.CalendarIdList {
+		for _, cid := range calendarIdList {
 			events, err := srv.Events.List(cid).ShowDeleted(false).
 				SingleEvents(true).TimeMin(tmin).UpdatedMin(umin).MaxResults(10).OrderBy("updated").Do()
 			if err != nil {
@@ -84,5 +84,5 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// listCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	updatesCmd.Flags().StringVar(&Since, "since", time.Now().Add(-time.Hour).Format(time.RFC3339), "since datetime")
+	updatesCmd.Flags().StringVar(&Since, "since", time.Now().Add(-time.Hour).Format(time.RFC3339), "Since datetime")
 }

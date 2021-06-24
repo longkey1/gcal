@@ -33,6 +33,8 @@ type Config struct {
 	CalendarIdList []string `mapstructure:"calendar_id_list"`
 }
 
+var calendarIdList []string
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Version: "0.4.0",
@@ -61,6 +63,8 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
+	rootCmd.PersistentFlags().StringSliceVarP(&calendarIdList, "calendar-id-list", "c", []string{}, "Calendar ID List")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -92,5 +96,10 @@ func initConfig() {
 	// Set GOOGLE_APPLICATION_CREDENTIALS
 	if err := os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", config.GoogleApplicationCredentials); err != nil {
 		log.Fatalf("Unable to set GOOGLE_APPLICATION_CREDENTIALS, %v", err)
+	}
+
+	// Set calendarIdList
+	if len(calendarIdList) == 0 {
+		calendarIdList = config.CalendarIdList
 	}
 }
