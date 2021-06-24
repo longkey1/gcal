@@ -45,7 +45,7 @@ var dayCmd = &cobra.Command{
 		tmin := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day() + Diff, 0, 0, 0, 0, time.Now().Location()).Format(time.RFC3339)
 		tmax := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day() + Diff, 23, 59, 59, 59, time.Now().Location()).Format(time.RFC3339)
 		var es []*calendar.Event
-		for _, cid := range config.CalendarIdList {
+		for _, cid := range calendarIdList {
 			events, err := srv.Events.List(cid).ShowDeleted(false).
 				SingleEvents(true).TimeMin(tmin).TimeMax(tmax).MaxResults(10).OrderBy("startTime").Do()
 			if err != nil {
@@ -85,5 +85,5 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// eventsCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	dayCmd.Flags().IntVarP(&Diff, "diff", "d", 0, "difference from today")
+	dayCmd.Flags().IntVarP(&Diff, "diff", "d", 0, "Difference from today")
 }
