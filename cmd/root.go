@@ -37,7 +37,7 @@ var calendarIdList []string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Version: "0.4.0",
+	Version: "0.4.1",
 	Use: "gcal",
 	Short: "A brief description of your application",
 	// Uncomment the following line if your bare application
