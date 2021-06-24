@@ -39,7 +39,7 @@ var calendarIdList []string
 var rootCmd = &cobra.Command{
 	Version: "0.4.1",
 	Use: "gcal",
-	Short: "A brief description of your application",
+	Short: "Google Calendar cli client",
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },

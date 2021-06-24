@@ -33,8 +33,6 @@ var Diff int
 var dayCmd = &cobra.Command{
 	Use:   "day",
 	Short: "day's events",
-	Long: `day's events',
-`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 		srv, err := calendar.NewService(ctx)
