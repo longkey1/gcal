@@ -37,7 +37,7 @@ var calendarIdList []string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Version: "0.4.1",
+	Version: "0.4.2",
 	Use: "gcal",
 	Short: "Google Calendar cli client",
 	// Uncomment the following line if your bare application
