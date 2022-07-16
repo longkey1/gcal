@@ -24,16 +24,17 @@ import (
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
-
-var config Config
-
 type Config struct {
 	GoogleApplicationCredentials string `mapstructure:"google_application_credentials"`
 	CalendarIdList []string `mapstructure:"calendar_id_list"`
 }
 
-var calendarIdList []string
+var (
+	version = "dev"
+	cfgFile string
+	config Config
+	calendarIdList []string
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
