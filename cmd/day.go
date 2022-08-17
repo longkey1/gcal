@@ -40,12 +40,12 @@ var dayCmd = &cobra.Command{
 			log.Fatalf("Unable to retrieve Calendar client: %v", err)
 		}
 
-		tmin := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day() + Diff, 0, 0, 0, 0, time.Now().Location()).Format(time.RFC3339)
-		tmax := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day() + Diff, 23, 59, 59, 59, time.Now().Location()).Format(time.RFC3339)
+		tmin := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day()+Diff, 0, 0, 0, 0, time.Now().Location()).Format(time.RFC3339)
+		tmax := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day()+Diff, 23, 59, 59, 59, time.Now().Location()).Format(time.RFC3339)
 		var es []*calendar.Event
 		for _, cid := range calendarIdList {
 			events, err := srv.Events.List(cid).ShowDeleted(false).
-				SingleEvents(true).TimeMin(tmin).TimeMax(tmax).MaxResults(10).OrderBy("startTime").Do()
+				SingleEvents(true).TimeMin(tmin).TimeMax(tmax).OrderBy("startTime").Do()
 			if err != nil {
 				log.Fatalf("Unable to retrieve next ten of the user's events: %v", err)
 			}
