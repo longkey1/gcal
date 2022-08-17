@@ -1,6 +1,6 @@
 module github.com/longkey1/gcal
 
-go 1.16
+go 1.18
 
 require (
 	cloud.google.com/go v0.86.0 // indirect
