@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,7 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
 	"log"
 	"os"
@@ -25,19 +26,19 @@ import (
 )
 
 type Config struct {
-	GoogleApplicationCredentials string `mapstructure:"google_application_credentials"`
-	CalendarIdList []string `mapstructure:"calendar_id_list"`
+	GoogleApplicationCredentials string   `mapstructure:"google_application_credentials"`
+	CalendarIdList               []string `mapstructure:"calendar_id_list"`
 }
 
 var (
-	cfgFile string
-	config Config
+	cfgFile        string
+	config         Config
 	calendarIdList []string
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use: "gcal",
+	Use:   "gcal",
 	Short: "Google Calendar cli client",
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
@@ -77,7 +78,7 @@ func initConfig() {
 		cobra.CheckErr(err)
 
 		// Search config in home/.config/gcal directory with name "config.toml" (without extension).
-		viper.AddConfigPath(home+"/.config/gcal")
+		viper.AddConfigPath(home + "/.config/gcal")
 		viper.SetConfigName("config")
 		viper.SetConfigType("toml")
 	}
