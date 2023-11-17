@@ -30,7 +30,6 @@ type Config struct {
 }
 
 var (
-	version = "dev"
 	cfgFile string
 	config Config
 	calendarIdList []string
@@ -38,7 +37,6 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Version: "0.4.2",
 	Use: "gcal",
 	Short: "Google Calendar cli client",
 	// Uncomment the following line if your bare application
@@ -103,4 +101,8 @@ func initConfig() {
 	if len(calendarIdList) == 0 {
 		calendarIdList = config.CalendarIdList
 	}
+}
+
+func SetVersionInfo(version, commit, date string) {
+	rootCmd.Version = fmt.Sprintf("%s (Built on %s from Git SHA %s)", version, date, commit)
 }
