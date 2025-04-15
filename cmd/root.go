@@ -16,23 +16,31 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"
-	"log"
-	"os"
-
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+	"google.golang.org/api/calendar/v3"
+	"log"
+	"net/http"
+	"net/url"
+	"os"
+	"path/filepath"
 )
 
 type Config struct {
-	GoogleApplicationCredentials string   `mapstructure:"google_application_credentials"`
+	GoogleApplicationCredentials string   `mapstructure:"application_credentials"`
+	GoogleUserCredentials        string   `mapstructure:"user_credentials"`
 	CalendarIdList               []string `mapstructure:"calendar_id_list"`
 }
 
 var (
 	cfgFile        string
 	config         Config
+	client         *http.Client
 	calendarIdList []string
 )
 
@@ -74,11 +82,11 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		// Find home directory.
-		home, err := homedir.Dir()
+		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
 		// Search config in home/.config/gcal directory with name "config.toml" (without extension).
-		viper.AddConfigPath(home + "/.config/gcal")
+		viper.AddConfigPath(filepath.Join(home, ".config/gcal"))
 		viper.SetConfigName("config")
 		viper.SetConfigType("toml")
 	}
@@ -93,10 +101,17 @@ func initConfig() {
 		log.Fatalf("Unable to decode into struct, %v", err)
 	}
 
-	// Set GOOGLE_APPLICATION_CREDENTIALS
-	if err := os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", config.GoogleApplicationCredentials); err != nil {
-		log.Fatalf("Unable to set GOOGLE_APPLICATION_CREDENTIALS, %v", err)
+	// Set client
+	b, err := os.ReadFile(config.GoogleApplicationCredentials)
+	if err != nil {
+		log.Fatalf("Unable to read client secret file: %v", err)
 	}
+
+	gconf, err := google.ConfigFromJSON(b, calendar.CalendarReadonlyScope)
+	if err != nil {
+		log.Fatalf("Unable to parse client secret file to config: %v", err)
+	}
+	client = getClient(gconf, config.GoogleUserCredentials)
 
 	// Set calendarIdList
 	if len(calendarIdList) == 0 {
@@ -106,4 +121,59 @@ func initConfig() {
 
 func SetVersionInfo(version, commit, date string) {
 	rootCmd.Version = fmt.Sprintf("%s (Built on %s from Git SHA %s)", version, date, commit)
+}
+
+func getClient(config *oauth2.Config, tokenFile string) *http.Client {
+	token, err := tokenFromFile(tokenFile)
+	if err != nil {
+		token = getTokenFromWeb(config)
+		saveToken(tokenFile, token)
+	}
+	return config.Client(context.Background(), token)
+}
+
+func tokenFromFile(file string) (*oauth2.Token, error) {
+	f, err := os.Open(file)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	token := &oauth2.Token{}
+	err = json.NewDecoder(f).Decode(token)
+	return token, err
+}
+
+func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
+	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
+	fmt.Printf("Go to the following link in your browser then type the full url: \n%v\n", authURL)
+
+	var fullURL string
+	if _, err := fmt.Scan(&fullURL); err != nil {
+		log.Fatalf("Unable to read authorization fullURL: %v", err)
+	}
+
+	parsedURL, err := url.Parse(fullURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	queryParams := parsedURL.Query()
+	code := queryParams.Get("code")
+	fmt.Println("Authorization Code:", code)
+
+	token, err := config.Exchange(context.Background(), code)
+	if err != nil {
+		log.Fatalf("Unable to retrieve token from web: %v", err)
+	}
+	return token
+}
+
+func saveToken(path string, token *oauth2.Token) {
+	fmt.Printf("Saving credential file to: %s\n", path)
+	f, err := os.Create(path)
+	if err != nil {
+		log.Fatalf("Unable to cache oauth token: %v", err)
+	}
+	defer f.Close()
+	json.NewEncoder(f).Encode(token)
 }
