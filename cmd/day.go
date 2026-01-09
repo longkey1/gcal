@@ -28,7 +28,7 @@ import (
 	"google.golang.org/api/calendar/v3"
 )
 
-var diff int
+var dateStr string
 
 // dayCmd represents the events command
 var dayCmd = &cobra.Command{
@@ -41,8 +41,13 @@ var dayCmd = &cobra.Command{
 			log.Fatalf("Unable to create gcal service: %v", err)
 		}
 
-		tmin := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day()+diff, 0, 0, 0, 0, time.Now().Location()).Format(time.RFC3339)
-		tmax := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day()+diff, 23, 59, 59, 59, time.Now().Location()).Format(time.RFC3339)
+		targetDate, err := time.ParseInLocation("2006-01-02", dateStr, time.Now().Location())
+		if err != nil {
+			log.Fatalf("Invalid date format (expected YYYY-MM-DD): %v", err)
+		}
+
+		tmin := time.Date(targetDate.Year(), targetDate.Month(), targetDate.Day(), 0, 0, 0, 0, targetDate.Location()).Format(time.RFC3339)
+		tmax := time.Date(targetDate.Year(), targetDate.Month(), targetDate.Day(), 23, 59, 59, 59, targetDate.Location()).Format(time.RFC3339)
 		var es []*calendar.Event
 		for _, cid := range svc.CalendarIDList {
 			events, err := svc.Calendar.Events.List(cid).ShowDeleted(false).
@@ -73,5 +78,5 @@ var dayCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(dayCmd)
-	dayCmd.Flags().IntVarP(&diff, "diff", "d", 0, "Difference from today")
+	dayCmd.Flags().StringVarP(&dateStr, "date", "d", time.Now().Format("2006-01-02"), "Date (YYYY-MM-DD)")
 }

@@ -28,7 +28,7 @@ import (
 	"google.golang.org/api/calendar/v3"
 )
 
-var since string
+var sinceDate string
 
 // updatesCmd represents the events command
 var updatesCmd = &cobra.Command{
@@ -42,8 +42,11 @@ var updatesCmd = &cobra.Command{
 		}
 
 		tmin := time.Now().Format(time.RFC3339)
-		t, _ := time.Parse(time.RFC3339, since)
-		umin := t.Format(time.RFC3339)
+		sinceTime, err := time.ParseInLocation("2006-01-02", sinceDate, time.Now().Location())
+		if err != nil {
+			log.Fatalf("Invalid date format (expected YYYY-MM-DD): %v", err)
+		}
+		umin := sinceTime.Format(time.RFC3339)
 		var es []*calendar.Event
 		for _, cid := range svc.CalendarIDList {
 			events, err := svc.Calendar.Events.List(cid).ShowDeleted(false).
@@ -74,5 +77,5 @@ var updatesCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(updatesCmd)
-	updatesCmd.Flags().StringVar(&since, "since", time.Now().Add(-time.Hour).Format(time.RFC3339), "Since datetime")
+	updatesCmd.Flags().StringVarP(&sinceDate, "since", "s", time.Now().Format("2006-01-02"), "Since date (YYYY-MM-DD)")
 }

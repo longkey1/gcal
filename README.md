@@ -71,30 +71,26 @@ Get events for today:
 gcal day
 ```
 
-Get events for tomorrow:
+Get events for a specific date:
 
 ```bash
-gcal day -d 1
-```
-
-Get events for yesterday:
-
-```bash
-gcal day -d -1
+gcal day -d 2024-01-15
+gcal day --date 2024-01-15
 ```
 
 ### updates
 
-Get recently updated events:
+Get events updated since today:
 
 ```bash
 gcal updates
 ```
 
-Get events updated since a specific time:
+Get events updated since a specific date:
 
 ```bash
-gcal updates --since "2024-01-01T00:00:00+09:00"
+gcal updates -s 2024-01-01
+gcal updates --since 2024-01-01
 ```
 
 ### Options
