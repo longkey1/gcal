@@ -19,19 +19,22 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/calendar/v3"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+	"google.golang.org/api/calendar/v3"
+	"google.golang.org/api/option"
 )
 
 type Config struct {
+	AuthType                     string   `mapstructure:"auth_type"` // "service_account" or "oauth"
 	GoogleApplicationCredentials string   `mapstructure:"application_credentials"`
 	GoogleUserCredentials        string   `mapstructure:"user_credentials"`
 	CalendarIdList               []string `mapstructure:"calendar_id_list"`
@@ -40,7 +43,6 @@ type Config struct {
 var (
 	cfgFile        string
 	config         Config
-	client         *http.Client
 	calendarIdList []string
 )
 
@@ -48,9 +50,6 @@ var (
 var rootCmd = &cobra.Command{
 	Use:   "gcal",
 	Short: "Google Calendar cli client",
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -62,56 +61,32 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.config/gcal/config.toml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
 	rootCmd.PersistentFlags().StringSliceVarP(&calendarIdList, "calendar-id-list", "c", []string{}, "Calendar ID List")
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	if cfgFile != "" {
-		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// Find home directory.
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
-		// Search config in home/.config/gcal directory with name "config.toml" (without extension).
 		viper.AddConfigPath(filepath.Join(home, ".config/gcal"))
 		viper.SetConfigName("config")
 		viper.SetConfigType("toml")
 	}
 
-	viper.AutomaticEnv() // read in environment variables that match
+	viper.AutomaticEnv()
 
-	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("Unable to read config file, %v", err)
 	}
 	if err := viper.Unmarshal(&config); err != nil {
 		log.Fatalf("Unable to decode into struct, %v", err)
 	}
-
-	// Set client
-	b, err := os.ReadFile(config.GoogleApplicationCredentials)
-	if err != nil {
-		log.Fatalf("Unable to read client secret file: %v", err)
-	}
-
-	gconf, err := google.ConfigFromJSON(b, calendar.CalendarReadonlyScope)
-	if err != nil {
-		log.Fatalf("Unable to parse client secret file to config: %v", err)
-	}
-	client = getClient(gconf, config.GoogleUserCredentials)
 
 	// Set calendarIdList
 	if len(calendarIdList) == 0 {
@@ -121,6 +96,41 @@ func initConfig() {
 
 func SetVersionInfo(version, commit, date string) {
 	rootCmd.Version = fmt.Sprintf("%s (Built on %s from Git SHA %s)", version, date, commit)
+}
+
+// NewCalendarService creates a Calendar service based on the configured auth type
+func NewCalendarService(ctx context.Context) (*calendar.Service, error) {
+	switch config.AuthType {
+	case "service_account":
+		return newServiceAccountCalendarService(ctx)
+	case "oauth":
+		return newOAuthCalendarService(ctx)
+	default:
+		// Default to oauth for backward compatibility
+		return newOAuthCalendarService(ctx)
+	}
+}
+
+func newServiceAccountCalendarService(ctx context.Context) (*calendar.Service, error) {
+	if err := os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", config.GoogleApplicationCredentials); err != nil {
+		return nil, fmt.Errorf("unable to set GOOGLE_APPLICATION_CREDENTIALS: %v", err)
+	}
+	return calendar.NewService(ctx)
+}
+
+func newOAuthCalendarService(ctx context.Context) (*calendar.Service, error) {
+	b, err := os.ReadFile(config.GoogleApplicationCredentials)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read client secret file: %v", err)
+	}
+
+	oauthConfig, err := google.ConfigFromJSON(b, calendar.CalendarReadonlyScope)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse client secret file to config: %v", err)
+	}
+
+	client := getClient(oauthConfig, config.GoogleUserCredentials)
+	return calendar.NewService(ctx, option.WithHTTPClient(client))
 }
 
 func getClient(config *oauth2.Config, tokenFile string) *http.Client {

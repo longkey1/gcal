@@ -16,15 +16,15 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"golang.org/x/net/context"
-	"google.golang.org/api/calendar/v3"
 	"log"
 	"sort"
 	"time"
 
 	"github.com/spf13/cobra"
+	"google.golang.org/api/calendar/v3"
 )
 
 var Since string
@@ -35,7 +35,7 @@ var updatesCmd = &cobra.Command{
 	Short: "recent updates events",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		srv, err := calendar.NewService(ctx)
+		srv, err := NewCalendarService(ctx)
 		if err != nil {
 			log.Fatalf("Unable to retrieve Calendar client: %v", err)
 		}
