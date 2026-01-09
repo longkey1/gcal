@@ -40,6 +40,29 @@ calendar_id_list = ["your-calendar-id@group.calendar.google.com"]
 
 ## Usage
 
+### auth
+
+Authenticate with Google Calendar API (OAuth only):
+
+```bash
+gcal auth
+```
+
+1. Run `gcal auth`
+2. Browser opens automatically (or copy the displayed URL manually)
+3. Sign in with your Google account and grant access
+4. Browser shows "Authentication successful!" - done
+
+Token is saved to the path specified in `user_credentials`.
+
+#### How it works
+
+1. `gcal auth` starts a local HTTP server (e.g., `localhost:54321`)
+2. OAuth URL includes `redirect_uri=http://localhost:54321/callback`
+3. After Google authentication, browser redirects to `localhost` with auth code
+4. Local server receives the code and exchanges it for access token
+5. Token is saved to file
+
 ### day
 
 Get events for today:
