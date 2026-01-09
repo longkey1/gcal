@@ -7,6 +7,10 @@ export PRODUCT_NAME := gcal
 init: ## Initialize the project
 	cd .devcontainer && cat devcontainer.json.dist | envsubst '$${GO_VERSION} $${PRODUCT_NAME}' > devcontainer.json
 
+.PHONY: build
+build: ## Build the application to ./bin/
+	go build -o ./bin/$(PRODUCT_NAME)
+
 .PHONY: tools
 tools: ## Install tools
 	go install github.com/goreleaser/goreleaser@latest
