@@ -23,11 +23,12 @@ import (
 	"sort"
 	"time"
 
+	"github.com/longkey1/gcal/internal/gcal"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/calendar/v3"
 )
 
-var Diff int
+var diff int
 
 // dayCmd represents the events command
 var dayCmd = &cobra.Command{
@@ -35,19 +36,19 @@ var dayCmd = &cobra.Command{
 	Short: "day's events",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		srv, err := NewCalendarService(ctx)
+		svc, err := gcal.NewService(ctx, GetConfig())
 		if err != nil {
-			log.Fatalf("Unable to retrieve Calendar client: %v", err)
+			log.Fatalf("Unable to create gcal service: %v", err)
 		}
 
-		tmin := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day()+Diff, 0, 0, 0, 0, time.Now().Location()).Format(time.RFC3339)
-		tmax := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day()+Diff, 23, 59, 59, 59, time.Now().Location()).Format(time.RFC3339)
+		tmin := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day()+diff, 0, 0, 0, 0, time.Now().Location()).Format(time.RFC3339)
+		tmax := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day()+diff, 23, 59, 59, 59, time.Now().Location()).Format(time.RFC3339)
 		var es []*calendar.Event
-		for _, cid := range calendarIdList {
-			events, err := srv.Events.List(cid).ShowDeleted(false).
+		for _, cid := range svc.CalendarIDList {
+			events, err := svc.Calendar.Events.List(cid).ShowDeleted(false).
 				SingleEvents(true).TimeMin(tmin).TimeMax(tmax).OrderBy("startTime").Do()
 			if err != nil {
-				log.Fatalf("Unable to retrieve next ten of the user's events: %v", err)
+				log.Fatalf("Unable to retrieve events: %v", err)
 			}
 			es = append(es, events.Items...)
 		}
@@ -59,7 +60,6 @@ var dayCmd = &cobra.Command{
 			if es[y].Start.DateTime != "" {
 				return true
 			}
-
 			return false
 		})
 
@@ -73,15 +73,5 @@ var dayCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(dayCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// eventsCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// eventsCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	dayCmd.Flags().IntVarP(&Diff, "diff", "d", 0, "Difference from today")
+	dayCmd.Flags().IntVarP(&diff, "diff", "d", 0, "Difference from today")
 }

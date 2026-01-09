@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,11 +23,12 @@ import (
 	"sort"
 	"time"
 
+	"github.com/longkey1/gcal/internal/gcal"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/calendar/v3"
 )
 
-var Since string
+var since string
 
 // updatesCmd represents the events command
 var updatesCmd = &cobra.Command{
@@ -35,20 +36,20 @@ var updatesCmd = &cobra.Command{
 	Short: "recent updates events",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		srv, err := NewCalendarService(ctx)
+		svc, err := gcal.NewService(ctx, GetConfig())
 		if err != nil {
-			log.Fatalf("Unable to retrieve Calendar client: %v", err)
+			log.Fatalf("Unable to create gcal service: %v", err)
 		}
 
 		tmin := time.Now().Format(time.RFC3339)
-		t, _ := time.Parse(time.RFC3339, Since)
+		t, _ := time.Parse(time.RFC3339, since)
 		umin := t.Format(time.RFC3339)
 		var es []*calendar.Event
-		for _, cid := range calendarIdList {
-			events, err := srv.Events.List(cid).ShowDeleted(false).
+		for _, cid := range svc.CalendarIDList {
+			events, err := svc.Calendar.Events.List(cid).ShowDeleted(false).
 				SingleEvents(true).TimeMin(tmin).UpdatedMin(umin).MaxResults(10).OrderBy("updated").Do()
 			if err != nil {
-				log.Fatalf("Unable to retrieve next ten of the user's events: %v", err)
+				log.Fatalf("Unable to retrieve events: %v", err)
 			}
 			es = append(es, events.Items...)
 		}
@@ -60,7 +61,6 @@ var updatesCmd = &cobra.Command{
 			if es[y].Start.DateTime != "" {
 				return true
 			}
-
 			return false
 		})
 
@@ -74,15 +74,5 @@ var updatesCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(updatesCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// listCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// listCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	updatesCmd.Flags().StringVar(&Since, "since", time.Now().Add(-time.Hour).Format(time.RFC3339), "Since datetime")
+	updatesCmd.Flags().StringVar(&since, "since", time.Now().Add(-time.Hour).Format(time.RFC3339), "Since datetime")
 }
