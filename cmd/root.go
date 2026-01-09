@@ -16,7 +16,6 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -80,10 +79,6 @@ func initConfig() {
 	if len(calendarIDList) > 0 {
 		config.CalendarIDList = calendarIDList
 	}
-}
-
-func SetVersionInfo(version, commit, date string) {
-	rootCmd.Version = fmt.Sprintf("%s (Built on %s from Git SHA %s)", version, date, commit)
 }
 
 // GetConfig returns the loaded configuration
