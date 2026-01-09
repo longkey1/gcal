@@ -47,7 +47,7 @@ var updatesCmd = &cobra.Command{
 			log.Fatalf("Invalid date format (expected YYYY-MM-DD): %v", err)
 		}
 		umin := sinceTime.Format(time.RFC3339)
-		var es []*calendar.Event
+		es := make([]*calendar.Event, 0)
 		for _, cid := range svc.CalendarIDList {
 			events, err := svc.Calendar.Events.List(cid).ShowDeleted(false).
 				SingleEvents(true).TimeMin(tmin).UpdatedMin(umin).MaxResults(10).OrderBy("updated").Do()

@@ -48,7 +48,7 @@ var dayCmd = &cobra.Command{
 
 		tmin := time.Date(targetDate.Year(), targetDate.Month(), targetDate.Day(), 0, 0, 0, 0, targetDate.Location()).Format(time.RFC3339)
 		tmax := time.Date(targetDate.Year(), targetDate.Month(), targetDate.Day(), 23, 59, 59, 59, targetDate.Location()).Format(time.RFC3339)
-		var es []*calendar.Event
+		es := make([]*calendar.Event, 0)
 		for _, cid := range svc.CalendarIDList {
 			events, err := svc.Calendar.Events.List(cid).ShowDeleted(false).
 				SingleEvents(true).TimeMin(tmin).TimeMax(tmax).OrderBy("startTime").Do()
