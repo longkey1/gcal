@@ -63,46 +63,70 @@ Token is saved to the path specified in `user_credentials`.
 4. Local server receives the code and exchanges it for access token
 5. Token is saved to file
 
-### day
+### list
 
 Get events for today:
 
 ```bash
-gcal day
+gcal list
 ```
 
 Get events for a specific date:
 
 ```bash
-gcal day -d 2024-01-15
-gcal day --date 2024-01-15
+gcal list -d 2024-01-15
+gcal list --date 2024-01-15
 ```
 
-### updates
-
-Get events updated since today:
+Get events for a date range:
 
 ```bash
-gcal updates
+gcal list -s 2024-01-01 -t 2024-01-31
+gcal list --since 2024-01-01 --to 2024-01-31
 ```
 
-Get events updated since a specific date:
+Get events from a date onwards:
 
 ```bash
-gcal updates -s 2024-01-01
-gcal updates --since 2024-01-01
+gcal list -s 2024-01-01
 ```
 
-### Options
+#### Flags
+
+| Flag | Short | Description | Default |
+|------|-------|-------------|---------|
+| `--date` | `-d` | Specific date (YYYY-MM-DD) | today |
+| `--since` | `-s` | Start date for range query | - |
+| `--to` | `-t` | End date for range query | - |
+| `--max-results` | `-n` | Maximum number of results | - |
+| `--output` | `-o` | Output format: table, json | table |
+| `--sort` | - | Sort by: start, updated | start |
+
+### Global Options
 
 ```bash
 # Specify config file
-gcal --config /path/to/config.toml day
+gcal --config /path/to/config.toml list
 
 # Specify calendar IDs
-gcal -c "calendar1@group.calendar.google.com,calendar2@group.calendar.google.com" day
+gcal -c "calendar1@group.calendar.google.com,calendar2@group.calendar.google.com" list
 ```
 
 ## Output
+
+### Table (default)
+
+```
+START     END       TITLE
+09:00     10:00     Team Meeting
+10:30     11:00     1on1
+(all-day) (all-day) Holiday
+```
+
+### JSON
+
+```bash
+gcal list -o json
+```
 
 Events are output as JSON array.
