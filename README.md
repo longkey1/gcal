@@ -101,6 +101,7 @@ gcal list -s 2024-01-01
 | `--max-results` | `-n` | Maximum number of results | - |
 | `--output` | `-o` | Output format: table, json | table |
 | `--sort` | - | Sort by: start, updated | start |
+| `--include-declined` | - | Include declined events | false |
 
 ### Global Options
 

@@ -32,12 +32,13 @@ import (
 )
 
 var (
-	listDate       string
-	listSince      string
-	listTo         string
-	listMaxResults int64
-	listOutput     string
-	listSort       string
+	listDate            string
+	listSince           string
+	listTo              string
+	listMaxResults      int64
+	listOutput          string
+	listSort            string
+	listIncludeDeclined bool
 )
 
 var listCmd = &cobra.Command{
@@ -59,6 +60,10 @@ var listCmd = &cobra.Command{
 		}
 		if err != nil {
 			log.Fatalf("Unable to retrieve events: %v", err)
+		}
+
+		if !listIncludeDeclined {
+			events = filterDeclinedEvents(events)
 		}
 
 		sortEvents(events, listSort)
@@ -123,6 +128,25 @@ func fetchRangeEvents(svc *gcal.Service) ([]*calendar.Event, error) {
 		events = append(events, result.Items...)
 	}
 	return events, nil
+}
+
+func filterDeclinedEvents(events []*calendar.Event) []*calendar.Event {
+	filtered := make([]*calendar.Event, 0, len(events))
+	for _, e := range events {
+		if !isDeclined(e) {
+			filtered = append(filtered, e)
+		}
+	}
+	return filtered
+}
+
+func isDeclined(event *calendar.Event) bool {
+	for _, attendee := range event.Attendees {
+		if attendee.Self && attendee.ResponseStatus == "declined" {
+			return true
+		}
+	}
+	return false
 }
 
 func sortEvents(events []*calendar.Event, sortBy string) {
@@ -202,4 +226,5 @@ func init() {
 	listCmd.Flags().Int64VarP(&listMaxResults, "max-results", "n", 0, "Maximum number of results")
 	listCmd.Flags().StringVarP(&listOutput, "output", "o", "table", "Output format: table, json")
 	listCmd.Flags().StringVar(&listSort, "sort", "start", "Sort by: start, updated")
+	listCmd.Flags().BoolVar(&listIncludeDeclined, "include-declined", false, "Include declined events")
 }
