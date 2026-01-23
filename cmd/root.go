@@ -16,7 +16,7 @@ limitations under the License.
 package cmd
 
 import (
-	"log"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -27,7 +27,6 @@ import (
 
 var (
 	cfgFile        string
-	config         *gcal.Config
 	calendarIDList []string
 )
 
@@ -35,6 +34,10 @@ var (
 var rootCmd = &cobra.Command{
 	Use:   "gcal",
 	Short: "Google Calendar cli client",
+	Long: `gcal is a command line client for Google Calendar.
+It allows you to authenticate, list, and manage your calendar events
+directly from the terminal.`,
+	SilenceUsage: true,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -44,19 +47,20 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
-
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.config/gcal/config.toml)")
 	rootCmd.PersistentFlags().StringSliceVarP(&calendarIDList, "calendar-id-list", "c", []string{}, "Calendar ID List")
 }
 
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
+// loadConfig reads in config file and returns the configuration.
+// This should be called by commands that need configuration.
+func loadConfig() (*gcal.Config, error) {
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get home directory: %w", err)
+		}
 
 		viper.AddConfigPath(filepath.Join(home, ".config/gcal"))
 		viper.SetConfigName("config")
@@ -66,22 +70,18 @@ func initConfig() {
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("Unable to read config file, %v", err)
+		return nil, fmt.Errorf("unable to read config file: %w", err)
 	}
 
-	var err error
-	config, err = gcal.LoadConfig()
+	config, err := gcal.LoadConfig()
 	if err != nil {
-		log.Fatalf("Unable to load config: %v", err)
+		return nil, fmt.Errorf("unable to load config: %w", err)
 	}
 
 	// Override calendar ID list from command line flag
 	if len(calendarIDList) > 0 {
 		config.CalendarIDList = calendarIDList
 	}
-}
 
-// GetConfig returns the loaded configuration
-func GetConfig() *gcal.Config {
-	return config
+	return config, nil
 }

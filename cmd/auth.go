@@ -17,7 +17,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/longkey1/gcal/internal/gcal"
@@ -32,37 +31,49 @@ var authCmd = &cobra.Command{
 	Long: `Authenticate with Google Calendar API using OAuth.
 This command initiates the OAuth flow to obtain and save access tokens.
 Only applicable when auth_type is set to "oauth" in config.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		cfg := GetConfig()
+	Example: `  # Authenticate with Google Calendar
+  gcal auth
 
-		if cfg.AuthType != gcal.AuthTypeOAuth {
-			log.Fatalf("auth command is only available for OAuth authentication (current: %s)", cfg.AuthType)
+  # Re-authenticate (will prompt for confirmation)
+  gcal auth`,
+	Args: cobra.NoArgs,
+	RunE: runAuth,
+}
+
+func runAuth(cmd *cobra.Command, args []string) error {
+	cfg, err := loadConfig()
+	if err != nil {
+		return err
+	}
+
+	if cfg.AuthType != gcal.AuthTypeOAuth {
+		return fmt.Errorf("auth command is only available for OAuth authentication (current: %s)", cfg.AuthType)
+	}
+
+	// Check if token already exists
+	if _, err := os.Stat(cfg.GoogleUserCredentials); err == nil {
+		fmt.Printf("Token file already exists: %s\n", cfg.GoogleUserCredentials)
+		fmt.Print("Do you want to re-authenticate? [y/N]: ")
+		var response string
+		fmt.Scanln(&response)
+		if response != "y" && response != "Y" {
+			fmt.Println("Cancelled.")
+			return nil
 		}
+	}
 
-		// Check if token already exists
-		if _, err := os.Stat(cfg.GoogleUserCredentials); err == nil {
-			fmt.Printf("Token file already exists: %s\n", cfg.GoogleUserCredentials)
-			fmt.Print("Do you want to re-authenticate? [y/N]: ")
-			var response string
-			fmt.Scanln(&response)
-			if response != "y" && response != "Y" {
-				fmt.Println("Cancelled.")
-				return
-			}
-		}
+	// Run OAuth flow
+	auth := google.NewOAuthAuthenticator(
+		cfg.GoogleApplicationCredentials,
+		cfg.GoogleUserCredentials,
+	)
 
-		// Run OAuth flow
-		auth := google.NewOAuthAuthenticator(
-			cfg.GoogleApplicationCredentials,
-			cfg.GoogleUserCredentials,
-		)
+	if err := auth.Authenticate(); err != nil {
+		return fmt.Errorf("authentication failed: %w", err)
+	}
 
-		if err := auth.Authenticate(); err != nil {
-			log.Fatalf("Authentication failed: %v", err)
-		}
-
-		fmt.Println("Authentication successful!")
-	},
+	fmt.Println("Authentication successful!")
+	return nil
 }
 
 func init() {

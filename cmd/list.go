@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"sort"
 	"text/tabwriter"
@@ -42,36 +41,98 @@ var (
 )
 
 var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List calendar events",
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-		svc, err := gcal.NewService(ctx, GetConfig())
-		if err != nil {
-			log.Fatalf("Unable to create gcal service: %v", err)
-		}
+	Use:     "list",
+	Aliases: []string{"ls"},
+	Short:   "List calendar events",
+	Long: `List calendar events from your Google Calendar.
+You can list events for a specific date, or a date range.
+Events can be filtered, sorted, and displayed in different formats.`,
+	Example: `  # List today's events
+  gcal list
 
-		var events []*calendar.Event
+  # List events for a specific date
+  gcal list --date 2024-01-15
 
-		if listSince != "" {
-			events, err = fetchRangeEvents(svc)
-		} else {
-			events, err = fetchDayEvents(svc)
-		}
-		if err != nil {
-			log.Fatalf("Unable to retrieve events: %v", err)
-		}
+  # List events in a date range
+  gcal list --since 2024-01-01 --to 2024-01-31
 
-		if !listIncludeDeclined {
-			events = filterDeclinedEvents(events)
-		}
+  # List events in JSON format
+  gcal list --output json
 
-		sortEvents(events, listSort)
+  # List events sorted by last update
+  gcal list --sort updated
 
-		if err := outputEvents(os.Stdout, events, listOutput); err != nil {
-			log.Fatalf("Unable to output events: %v", err)
-		}
-	},
+  # Include declined events
+  gcal list --include-declined`,
+	Args:   cobra.NoArgs,
+	PreRunE: validateListFlags,
+	RunE:   runList,
+}
+
+func validateListFlags(cmd *cobra.Command, args []string) error {
+	// Validate that --date and --since are not used together
+	dateFlag := cmd.Flags().Lookup("date")
+	sinceFlag := cmd.Flags().Lookup("since")
+
+	if dateFlag.Changed && sinceFlag.Changed {
+		return fmt.Errorf("cannot use --date and --since together")
+	}
+
+	// Validate --to can only be used with --since
+	toFlag := cmd.Flags().Lookup("to")
+	if toFlag.Changed && !sinceFlag.Changed {
+		return fmt.Errorf("--to can only be used with --since")
+	}
+
+	// Validate output format
+	validOutputs := map[string]bool{"table": true, "json": true}
+	if !validOutputs[listOutput] {
+		return fmt.Errorf("invalid output format: %s (valid: table, json)", listOutput)
+	}
+
+	// Validate sort option
+	validSorts := map[string]bool{"start": true, "updated": true}
+	if !validSorts[listSort] {
+		return fmt.Errorf("invalid sort option: %s (valid: start, updated)", listSort)
+	}
+
+	return nil
+}
+
+func runList(cmd *cobra.Command, args []string) error {
+	cfg, err := loadConfig()
+	if err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+	svc, err := gcal.NewService(ctx, cfg)
+	if err != nil {
+		return fmt.Errorf("unable to create gcal service: %w", err)
+	}
+
+	var events []*calendar.Event
+
+	if listSince != "" {
+		events, err = fetchRangeEvents(svc)
+	} else {
+		events, err = fetchDayEvents(svc)
+	}
+	if err != nil {
+		return fmt.Errorf("unable to retrieve events: %w", err)
+	}
+
+	if !listIncludeDeclined {
+		events = filterDeclinedEvents(events)
+	}
+
+	sortEvents(events, listSort)
+
+	if err := outputEvents(os.Stdout, events, listOutput); err != nil {
+		return fmt.Errorf("unable to output events: %w", err)
+	}
+
+	return nil
 }
 
 func fetchDayEvents(svc *gcal.Service) ([]*calendar.Event, error) {

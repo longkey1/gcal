@@ -26,14 +26,29 @@ import (
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Show version information",
-	Run: func(cmd *cobra.Command, args []string) {
-		short, _ := cmd.Flags().GetBool("short")
-		if short {
-			fmt.Println(version.Short())
-		} else {
-			fmt.Println(version.Info())
-		}
-	},
+	Long:  `Display the version, commit SHA, and build time of gcal.`,
+	Example: `  # Show full version information
+  gcal version
+
+  # Show only version number
+  gcal version --short`,
+	Args: cobra.NoArgs,
+	RunE: runVersion,
+}
+
+func runVersion(cmd *cobra.Command, args []string) error {
+	short, err := cmd.Flags().GetBool("short")
+	if err != nil {
+		return err
+	}
+
+	if short {
+		fmt.Println(version.Short())
+	} else {
+		fmt.Println(version.Info())
+	}
+
+	return nil
 }
 
 func init() {
