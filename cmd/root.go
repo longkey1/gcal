@@ -16,7 +16,7 @@ limitations under the License.
 package cmd
 
 import (
-	"log"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -27,7 +27,6 @@ import (
 
 var (
 	cfgFile        string
-	config         *gcal.Config
 	calendarIDList []string
 )
 
@@ -65,23 +64,31 @@ func initConfig() {
 
 	viper.AutomaticEnv()
 
-	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("Unable to read config file, %v", err)
+	// Don't fail if config file is not found - let individual commands handle it
+	_ = viper.ReadInConfig()
+}
+
+// loadConfig loads configuration from viper and applies command line overrides
+func loadConfig() (*gcal.Config, error) {
+	// Check if config file was actually read
+	if viper.ConfigFileUsed() == "" {
+		if cfgFile != "" {
+			return nil, fmt.Errorf("config file not found: %s", cfgFile)
+		}
+		home, _ := os.UserHomeDir()
+		defaultPath := filepath.Join(home, ".config/gcal/config.toml")
+		return nil, fmt.Errorf("config file not found at default location: %s", defaultPath)
 	}
 
-	var err error
-	config, err = gcal.LoadConfig()
+	config, err := gcal.LoadConfig()
 	if err != nil {
-		log.Fatalf("Unable to load config: %v", err)
+		return nil, fmt.Errorf("unable to load config: %w", err)
 	}
 
 	// Override calendar ID list from command line flag
 	if len(calendarIDList) > 0 {
 		config.CalendarIDList = calendarIDList
 	}
-}
 
-// GetConfig returns the loaded configuration
-func GetConfig() *gcal.Config {
-	return config
+	return config, nil
 }

@@ -17,7 +17,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/longkey1/gcal/internal/gcal"
@@ -32,11 +31,14 @@ var authCmd = &cobra.Command{
 	Long: `Authenticate with Google Calendar API using OAuth.
 This command initiates the OAuth flow to obtain and save access tokens.
 Only applicable when auth_type is set to "oauth" in config.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		cfg := GetConfig()
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := loadConfig()
+		if err != nil {
+			return err
+		}
 
 		if cfg.AuthType != gcal.AuthTypeOAuth {
-			log.Fatalf("auth command is only available for OAuth authentication (current: %s)", cfg.AuthType)
+			return fmt.Errorf("auth command is only available for OAuth authentication (current: %s)", cfg.AuthType)
 		}
 
 		// Check if token already exists
@@ -47,7 +49,7 @@ Only applicable when auth_type is set to "oauth" in config.`,
 			fmt.Scanln(&response)
 			if response != "y" && response != "Y" {
 				fmt.Println("Cancelled.")
-				return
+				return nil
 			}
 		}
 
@@ -58,10 +60,11 @@ Only applicable when auth_type is set to "oauth" in config.`,
 		)
 
 		if err := auth.Authenticate(); err != nil {
-			log.Fatalf("Authentication failed: %v", err)
+			return fmt.Errorf("authentication failed: %w", err)
 		}
 
 		fmt.Println("Authentication successful!")
+		return nil
 	},
 }
 

@@ -19,7 +19,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"sort"
 	"time"
 
@@ -34,16 +33,21 @@ var dateStr string
 var dayCmd = &cobra.Command{
 	Use:   "day",
 	Short: "day's events",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
-		svc, err := gcal.NewService(ctx, GetConfig())
+		cfg, err := loadConfig()
 		if err != nil {
-			log.Fatalf("Unable to create gcal service: %v", err)
+			return err
+		}
+
+		svc, err := gcal.NewService(ctx, cfg)
+		if err != nil {
+			return fmt.Errorf("unable to create gcal service: %w", err)
 		}
 
 		targetDate, err := time.ParseInLocation("2006-01-02", dateStr, time.Now().Location())
 		if err != nil {
-			log.Fatalf("Invalid date format (expected YYYY-MM-DD): %v", err)
+			return fmt.Errorf("invalid date format (expected YYYY-MM-DD): %w", err)
 		}
 
 		tmin := time.Date(targetDate.Year(), targetDate.Month(), targetDate.Day(), 0, 0, 0, 0, targetDate.Location()).Format(time.RFC3339)
@@ -53,7 +57,7 @@ var dayCmd = &cobra.Command{
 			events, err := svc.Calendar.Events.List(cid).ShowDeleted(false).
 				SingleEvents(true).TimeMin(tmin).TimeMax(tmax).OrderBy("startTime").Do()
 			if err != nil {
-				log.Fatalf("Unable to retrieve events: %v", err)
+				return fmt.Errorf("unable to retrieve events: %w", err)
 			}
 			es = append(es, events.Items...)
 		}
@@ -70,9 +74,10 @@ var dayCmd = &cobra.Command{
 
 		b, err := json.Marshal(es)
 		if err != nil {
-			log.Fatalf("Unable to marshal json: %v", err)
+			return fmt.Errorf("unable to marshal json: %w", err)
 		}
 		fmt.Printf("%s", b)
+		return nil
 	},
 }
 
