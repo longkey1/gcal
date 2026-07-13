@@ -64,9 +64,9 @@ Events can be filtered, sorted, and displayed in different formats.`,
 
   # Include declined events
   gcal list --include-declined`,
-	Args:   cobra.NoArgs,
+	Args:    cobra.NoArgs,
 	PreRunE: validateListFlags,
-	RunE:   runList,
+	RunE:    runList,
 }
 
 func validateListFlags(cmd *cobra.Command, args []string) error {
