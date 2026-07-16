@@ -103,6 +103,28 @@ gcal list -s 2024-01-01
 | `--sort` | - | Sort by: start, updated | start |
 | `--include-declined` | - | Include declined events | false |
 
+### version
+
+Show version information:
+
+```bash
+gcal version
+```
+
+```
+Version: v1.2.3
+Commit: abc1234
+Build Time: 2024-01-15T00:00:00Z
+Go Version: go1.26
+```
+
+Show only the version number:
+
+```bash
+gcal version -s
+gcal version --short
+```
+
 ### Global Options
 
 ```bash
