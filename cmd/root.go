@@ -37,7 +37,8 @@ var rootCmd = &cobra.Command{
 	Long: `gcal is a command line client for Google Calendar.
 It allows you to authenticate, list, and manage your calendar events
 directly from the terminal.`,
-	SilenceUsage: true,
+	SilenceErrors: true,
+	SilenceUsage:  true,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

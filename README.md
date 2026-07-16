@@ -153,3 +153,7 @@ gcal list -o json
 ```
 
 Events are output as JSON array.
+
+## License
+
+MIT
