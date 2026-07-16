@@ -15,6 +15,9 @@ go build
 # Run the application
 go run main.go
 
+# Run lint (golangci-lint, version managed by go.mod tool directive)
+make lint
+
 # Release (dry run by default)
 make release type=patch|minor|major
 

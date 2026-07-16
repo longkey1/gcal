@@ -55,7 +55,7 @@ func runAuth(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Token file already exists: %s\n", cfg.GoogleUserCredentials)
 		fmt.Print("Do you want to re-authenticate? [y/N]: ")
 		var response string
-		fmt.Scanln(&response)
+		_, _ = fmt.Scanln(&response)
 		if response != "y" && response != "Y" {
 			fmt.Println("Cancelled.")
 			return nil

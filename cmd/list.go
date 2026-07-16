@@ -245,18 +245,22 @@ func outputJSON(w io.Writer, events []*calendar.Event) error {
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(w, "%s", b)
-	return nil
+	_, err = fmt.Fprintf(w, "%s", b)
+	return err
 }
 
 func outputTable(w io.Writer, events []*calendar.Event) error {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(tw, "START\tEND\tTITLE")
+	if _, err := fmt.Fprintln(tw, "START\tEND\tTITLE"); err != nil {
+		return err
+	}
 
 	for _, e := range events {
 		start := formatEventTime(e.Start)
 		end := formatEventTime(e.End)
-		fmt.Fprintf(tw, "%s\t%s\t%s\n", start, end, e.Summary)
+		if _, err := fmt.Fprintf(tw, "%s\t%s\t%s\n", start, end, e.Summary); err != nil {
+			return err
+		}
 	}
 
 	return tw.Flush()
